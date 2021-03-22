@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Service Worker</title>
+	<style>
+
+		.btn-off {
+			/*display: none;*/
+		}
+
+  </style>	
+</head>
+<body>
+
+	<button id="subscribe">Subscribe 🔔</button>
+	<button class="btn-off" id="unsubscribe">Unsubscribe 🔕</button>
+
+	<h3 class="heading">Broadcast</h3>
+	<form class="form" id="form">
+		<div class="form__group">
+			<textarea class="form__text" id="form__text" cols="30" rows="10"></textarea>
+		</div>
+		<div class="form__group">
+			<button class="form__submit" type="submit">Roaring...</button>
+		</div>
+	</form>
+
+	<script>
+
+		addEventListener('load', async () => {
+
+			await navigator.serviceWorker.register('./serviceWoker.js')
+		})
+
+		subscribe.addEventListener('click', async () => {
+
+			console.log('subscribe')
+
+			const worker = await navigator.serviceWorker.ready
+
+			const publicKeyRes = await fetch('http://localhost:3001/publickey')
+			const serverRes = await publicKeyRes.json()
+
+			const pushManager = await worker.pushManager.subscribe({
+				userVisibleOnly: true,
+				applicationServerKey: serverRes.publicKey
+			})
+
+			const sendSubscriberObj = await fetch('http://localhost:3001/subscribe', {
+				method: 'post',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					subscriber: pushManager
+				})
+
+			})
+
+			const subscribeRes = await sendSubscriberObj.json()
+
+			if(subscribeRes.status === 200) {
+				subscribe.classList.add('btn-off')
+				unsubscribe.classList.remove('btn-off')
+				alert('Siz bizga obuna bo\'ldingiz 🎉')
+			}
+
+		})
+
+		unsubscribe.addEventListener('click', async () => {
+
+			console.log('unsubscribe')
+
+			try {
+				const worker = await navigator.serviceWorker.ready
+
+				const subscription = await worker.pushManager.getSubscription()
+
+				await subscription.unsubscribe()
+
+				alert('Obuna o\'chirildi (')
+
+				subscribe.classList.remove('btn-off')
+				unsubscribe.classList.add('btn-off')
+			} catch(e) {
+				alert('Obuna allaqachon o\'chirilgan!')
+				console.log(e.message)
+			}
+
+		})
+
+		form.addEventListener('submit', async (evt) => {
+
+			evt.preventDefault()
+
+			try {
+
+				const broadcastRes = await fetch('http://localhost:3001/broadcast', {
+					method: 'post',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						text: form__text.value
+					})
+				})
+
+				const data = await broadcastRes.json()
+
+				if(data.status === 200) {
+
+					form.reset()
+
+					alert('Xabar muvaffaqiyatli yuborildi.')
+
+				}
+
+			} catch(e) {
+				console.log(e)
+			}			
+
+		})
+
+  </script>
+	
+</body>
+</html>
