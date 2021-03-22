@@ -40,7 +40,7 @@
 
 			const worker = await navigator.serviceWorker.ready
 
-			const publicKeyRes = await fetch('http://localhost:3001/publickey')
+			const publicKeyRes = await fetch('https://service-worker-server.herokuapp.com/publickey')
 			const serverRes = await publicKeyRes.json()
 
 			const pushManager = await worker.pushManager.subscribe({
@@ -48,7 +48,7 @@
 				applicationServerKey: serverRes.publicKey
 			})
 
-			const sendSubscriberObj = await fetch('http://localhost:3001/subscribe', {
+			const sendSubscriberObj = await fetch('https://service-worker-server.herokuapp.com/subscribe', {
 				method: 'post',
 				headers: {
 					'Content-Type': 'application/json',
@@ -97,7 +97,7 @@
 
 			try {
 
-				const broadcastRes = await fetch('http://localhost:3001/broadcast', {
+				const broadcastRes = await fetch('https://service-worker-server.herokuapp.com/broadcast', {
 					method: 'post',
 					headers: {
 						'Content-Type': 'application/json',
